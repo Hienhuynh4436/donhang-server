@@ -1,14 +1,13 @@
 const express = require("express");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const multer = require("multer");
-const cloudinaryStorage = require("../storage/cloudinary");
+const express = require("express");
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 const router = express.Router();
 
-const upload = multer({ storage: cloudinaryStorage });
-
-router.post("/register", upload.single("logo"), async (req, res) => {
+router.post("/register", async (req, res) => {
   const { email, password } = req.body;
   if (!email || !password) {
     return res.status(400).json({ message: "Thiếu email hoặc mật khẩu" });
@@ -17,7 +16,6 @@ router.post("/register", upload.single("logo"), async (req, res) => {
   if (existing) return res.status(400).json({ message: "Email đã tồn tại" });
   const hashed = await bcrypt.hash(password, 10);
   const user = new User({ email, password: hashed });
-  if (req.file) user.logoUrl = req.file.path;
   await user.save();
   res.json({ message: "Tạo tài khoản thành công" });
 });
