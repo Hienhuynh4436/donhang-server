@@ -26,5 +26,15 @@ router.post("/login", async (req, res) => {
   const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET);
   res.json({ token, logoUrl: user.logoUrl });
 });
+const Order = require("../models/Order");
 
+router.delete("/delete-account", authMiddleware, async (req, res) => {
+  try {
+    await Order.deleteMany({ userId: req.userId });
+    await User.findByIdAndDelete(req.userId);
+    res.json({ message: "Đã xoá tài khoản và toàn bộ đơn hàng" });
+  } catch (err) {
+    res.status(500).json({ message: "Xoá thất bại", error: err });
+  }
+});
 module.exports = router;
