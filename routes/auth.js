@@ -27,7 +27,17 @@ router.post("/login", async (req, res) => {
   res.json({ token, logoUrl: user.logoUrl });
 });
 const Order = require("../models/Order");
-
+function authMiddleware(req, res, next) {
+  const token = req.headers.authorization?.split(" ")[1];
+  if (!token) return res.status(401).json({ message: "Không có token" });
+  try {
+    const data = jwt.verify(token, process.env.JWT_SECRET);
+    req.userId = data.id;
+    next();
+  } catch {
+    res.status(401).json({ message: "Token không hợp lệ" });
+  }
+}
 router.delete("/delete-account", authMiddleware, async (req, res) => {
   try {
     await Order.deleteMany({ userId: req.userId });
