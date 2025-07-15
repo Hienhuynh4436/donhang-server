@@ -18,7 +18,7 @@ function authMiddleware(req, res, next) {
 router.post("/", authMiddleware, async (req, res) => {
   const order = new Order({ ...req.body, userId: req.userId });
   await order.save();
-  res.json({ message: "Lưu đơn hàng thành công", order });
+  res.json({ message: "Lưu thành công", order: await Order.findById(order._id) });
 });
 
 router.get("/", authMiddleware, async (req, res) => {
