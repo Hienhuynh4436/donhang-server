@@ -6,13 +6,16 @@ const orderSchema = new mongoose.Schema({
   address: String,
   product: String,
   price: String,
-  shipping: String,
+  shippingFee: String,        // ✅ sửa từ shipping
   discount: String,
   paid: String,
-  remain: String,
-  method: String,
+  remaining: String,          // ✅ sửa từ remain
+  paymentMethod: String,      // ✅ sửa từ method
+  sentDate: String,           // ✅ thêm mới
+  expectedDate: String,       // ✅ thêm mới
   note: String,
   invoiceImage: String,
   createdAt: { type: Date, default: Date.now }
 });
+
 module.exports = mongoose.model("Order", orderSchema);
