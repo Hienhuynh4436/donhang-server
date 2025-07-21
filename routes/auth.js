@@ -24,6 +24,8 @@ router.post("/login", async (req, res) => {
   const ok = await bcrypt.compare(password, user.password);
   if (!ok) return res.status(400).json({ message: "Mật khẩu không đúng" });
   const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET);
+  user.lastLogin = new Date(); 
+  await user.save();
   res.json({ token, logoUrl: user.logoUrl });
 });
 const Order = require("../models/Order");
