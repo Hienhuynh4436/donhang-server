@@ -3,19 +3,20 @@ const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 const router = express.Router();
 
+// Middleware kiểm tra token
 function authMiddleware(req, res, next) {
   const token = req.headers.authorization?.split(" ")[1];
   if (!token) return res.status(401).json({ message: "Không có token" });
   try {
-    const data = jwt.verify(token, process.env.JWT_SECRET);
-    req.userId = data.id;
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.userId = decoded.id;
     next();
   } catch {
     res.status(401).json({ message: "Token không hợp lệ" });
   }
 }
 
-// GET preferences
+// ✅ Lấy thông tin người dùng đang đăng nhập
 router.get("/me", authMiddleware, async (req, res) => {
   try {
     const user = await User.findById(req.userId, "email preferences logoUrl lastLogin");
@@ -26,7 +27,14 @@ router.get("/me", authMiddleware, async (req, res) => {
   }
 });
 
-// UPDATE preferences
+// ✅ Lấy preferences riêng (đơn giản hơn nếu chỉ muốn lấy preferences)
+router.get("/preferences", authMiddleware, async (req, res) => {
+  const user = await User.findById(req.userId);
+  if (!user) return res.status(404).json({ message: "Không tìm thấy người dùng" });
+  res.json(user.preferences || {});
+});
+
+// ✅ Cập nhật preferences
 router.put("/preferences", authMiddleware, async (req, res) => {
   const { bgColor, textColor, borderColor, titleColor, fontFamily } = req.body;
   try {
