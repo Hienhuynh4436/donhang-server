@@ -15,7 +15,7 @@ mongoose.connect(process.env.MONGODB_URI)
 
 app.use("/api/auth", require("./routes/auth"));
 app.use("/api/orders", require("./routes/orders"));
-
+app.use("/api/user", require("./routes/user"));
 app.get("/", (req, res) => {
   res.send("Backend đang hoạt động ✔️");
 });
