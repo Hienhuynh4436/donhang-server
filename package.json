@@ -4,7 +4,7 @@
   "main": "app.js",
   "scripts": {
   "start": "node app.js",
-  "cleanup": "node jobs.js"
+  "cleanup": "node cleanup.js"
 },
   "dependencies": {
     "bcryptjs": "^3.0.2",
