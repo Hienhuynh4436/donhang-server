@@ -9,7 +9,9 @@ const Order = require("../models/Order");
 const router = express.Router();
 
 // Hàm gửi email xác minh
-async function sendVerifyEmail(email, link) {
+async function sendVerifyEmail(email, token) {
+  const verifyLink = `${process.env.BASE_URL}/verify?token=${token}&email=${encodeURIComponent(email)}`;
+  
   const transporter = nodemailer.createTransport({
     service: "Gmail",
     auth: {
@@ -25,7 +27,7 @@ async function sendVerifyEmail(email, link) {
     html: `
       <h3>Xác minh tài khoản của bạn</h3>
       <p>Bạn đã đăng ký tài khoản. Vui lòng nhấn vào liên kết dưới đây để xác minh:</p>
-      <a href="https://hienxacminh@gmail.com/verify?token=${link}&email=${encodeURIComponent(email)}">Xác minh tài khoản</a>
+      <a href="${verifyLink}">👉 Xác minh tài khoản</a>
       <p>Liên kết sẽ hết hạn sau 24 giờ.</p>
     `
   });
@@ -106,5 +108,26 @@ router.delete("/delete-account", authMiddleware, async (req, res) => {
     res.status(500).json({ message: "Xoá thất bại", error: err });
   }
 });
+// 📌 Xử lý xác minh email khi user click link
+router.get("/verify", async (req, res) => {
+  const { token, email } = req.query;
+  if (!token || !email) {
+    return res.status(400).send("Liên kết xác minh không hợp lệ.");
+  }
 
+  const user = await User.findOne({ email, verifyToken: token });
+  if (!user) return res.status(400).send("Token hoặc email sai.");
+
+  if (user.verifyExpires < Date.now()) {
+    return res.status(400).send("Token đã hết hạn, vui lòng đăng ký lại.");
+  }
+
+  user.isVerified = true;
+  user.verifyToken = undefined;
+  user.verifyExpires = undefined;
+  await user.save();
+
+  // Sau khi xác minh thành công, redirect về trang Login
+  res.redirect(`${process.env.BASE_URL}/login?verified=1`);
+});
 module.exports = router;
