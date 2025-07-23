@@ -1,17 +1,20 @@
-// file: routes/verify-all.js
+// routes/verify-all.js
 const express = require("express");
 const router = express.Router();
 const User = require("../models/User");
 
-router.post("/", async (req, res) => {
+router.get("/", async (req, res) => {
   try {
     const result = await User.updateMany(
       { isVerified: false },
-      { $set: { isVerified: true } }
+      {
+        $set: { isVerified: true },
+        $unset: { verifyToken: "", verifyExpires: "" }
+      }
     );
-    res.json({ message: `✅ Updated ${result.modifiedCount} users` });
+    res.json({ message: `Đã xác minh ${result.modifiedCount} tài khoản!` });
   } catch (err) {
-    res.status(500).json({ message: "❌ Lỗi", error: err });
+    res.status(500).json({ message: "Lỗi khi xác minh tất cả", error: err });
   }
 });
 
