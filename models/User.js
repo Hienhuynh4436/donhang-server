@@ -11,9 +11,7 @@ const userSchema = new mongoose.Schema({
     fontFamily: String
   },
   logoUrl: { type: String },
-  lastLogin: { type: Date, default: Date.now },
-  resetToken: String,
-  resetTokenExpiry: Date
+  lastLogin: { type: Date, default: Date.now }
 });
 
 module.exports = mongoose.model("User", userSchema);
