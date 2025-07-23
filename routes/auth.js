@@ -130,4 +130,51 @@ router.get("/verify", async (req, res) => {
   // Sau khi xác minh thành công, redirect về trang Login
   res.redirect(`${process.env.BASE_URL}/login?verified=1`);
 });
+// POST /api/auth/forgot-password
+router.post("/forgot-password", async (req, res) => {
+  const { email } = req.body;
+  const user = await User.findOne({ email });
+  if (!user) return res.status(400).json({ message: "Email không tồn tại" });
+
+  const token = crypto.randomBytes(32).toString("hex");
+  user.resetToken = token;
+  user.resetTokenExpiry = Date.now() + 60 * 60 * 1000; // 1h
+  await user.save();
+
+  const resetLink = `${process.env.BASE_URL}/reset-password.html?token=${token}&email=${email}`;
+  const transporter = nodemailer.createTransport({
+    service: "gmail",
+    auth: {
+      user: process.env.SEND_EMAIL,
+      pass: process.env.EMAIL_PASS // hoặc mật khẩu ứng dụng nếu dùng Gmail
+    }
+  });
+
+  await transporter.sendMail({
+    to: email,
+    subject: "Khôi phục mật khẩu",
+    html: `<p>Click vào link sau để đặt lại mật khẩu:</p><a href="${resetLink}">${resetLink}</a>`
+  });
+
+  res.json({ message: "✅ Đã gửi email khôi phục" });
+});
+// POST /api/auth/reset-password
+router.post("/reset-password", async (req, res) => {
+  const { email, token, newPassword } = req.body;
+
+  const user = await User.findOne({
+    email,
+    resetToken: token,
+    resetTokenExpiry: { $gt: Date.now() }
+  });
+
+  if (!user) return res.status(400).json({ message: "Token không hợp lệ hoặc đã hết hạn" });
+
+  user.password = await bcrypt.hash(newPassword, 10);
+  user.resetToken = undefined;
+  user.resetTokenExpiry = undefined;
+  await user.save();
+
+  res.json({ message: "✅ Mật khẩu đã được đặt lại" });
+});
 module.exports = router;
