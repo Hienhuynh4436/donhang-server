@@ -3,8 +3,6 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 const Order = require("../models/Order");
-const crypto = require("crypto");
-const nodemailer = require("nodemailer");
 
 const router = express.Router();
 
@@ -21,7 +19,7 @@ router.post("/register", async (req, res) => {
   const user = new User({
     email,
     password: hashed,
-    isVerified: true // ✅ Cho phép luôn
+    isVerified: true // Cho phép luôn
   });
 
   await user.save();
@@ -65,57 +63,6 @@ router.delete("/delete-account", authMiddleware, async (req, res) => {
   } catch (err) {
     res.status(500).json({ message: "Xoá thất bại", error: err });
   }
-});
-
-// 📌 Quên mật khẩu
-router.post("/forgot-password", async (req, res) => {
-  const { email } = req.body;
-  const user = await User.findOne({ email });
-  if (!user) return res.status(400).json({ message: "Email không tồn tại" });
-
-  const token = crypto.randomBytes(32).toString("hex");
-  user.resetToken = token;
-  user.resetTokenExpiry = Date.now() + 60 * 60 * 1000;
-  await user.save();
-
-  const resetLink = `${process.env.BASE_URL}/reset-password.html?token=${token}&email=${email}`;
-
-  const transporter = nodemailer.createTransport({
-    service: "SendGrid",
-    auth: {
-      user: "apikey",
-      pass: process.env.SENDGRID_API_KEY
-    }
-  });
-
-  await transporter.sendMail({
-    from: `"Đơn Hàng" <${process.env.SEND_EMAIL}>`,
-    to: email,
-    subject: "Khôi phục mật khẩu",
-    html: `<p>Click vào link sau để đặt lại mật khẩu:</p><a href="${resetLink}">${resetLink}</a>`
-  });
-
-  res.json({ message: "✅ Đã gửi email khôi phục" });
-});
-
-// 📌 Đặt lại mật khẩu
-router.post("/reset-password", async (req, res) => {
-  const { email, token, newPassword } = req.body;
-
-  const user = await User.findOne({
-    email,
-    resetToken: token,
-    resetTokenExpiry: { $gt: Date.now() }
-  });
-
-  if (!user) return res.status(400).json({ message: "Token không hợp lệ hoặc đã hết hạn" });
-
-  user.password = await bcrypt.hash(newPassword, 10);
-  user.resetToken = undefined;
-  user.resetTokenExpiry = undefined;
-  await user.save();
-
-  res.json({ message: "✅ Mật khẩu đã được đặt lại" });
 });
 
 module.exports = router;
