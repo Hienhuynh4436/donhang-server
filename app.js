@@ -6,6 +6,7 @@ const dotenv = require("dotenv");
 dotenv.config();
 
 const app = express();
+const verifyAllRoute = require("./routes/verify-all");
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -16,7 +17,8 @@ mongoose.connect(process.env.MONGODB_URI)
 app.use("/api/auth", require("./routes/auth"));
 app.use("/api/orders", require("./routes/orders"));
 app.use("/api/user", require("./routes/user"));
-app.use("/api/cleanup", require("./routes/cleanup")); // 👈 thêm dòng này
+app.use("/api/cleanup", require("./routes/cleanup"));
+app.use("/api/verify-all", verifyAllRoute);
 app.get("/", (req, res) => {
   res.send("Backend đang hoạt động ✔️");
 });
