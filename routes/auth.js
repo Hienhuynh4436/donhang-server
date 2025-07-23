@@ -13,10 +13,10 @@ async function sendVerifyEmail(email, token) {
   const verifyLink = `${process.env.BASE_URL}/verify?token=${token}&email=${encodeURIComponent(email)}`;
   
   const transporter = nodemailer.createTransport({
-    service: "Gmail",
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS
+    service: "SendGrid",
+  auth: {
+    user: "apikey", // BẮT BUỘC phải là "apikey"
+    pass: process.env.SENDGRID_API_KEY
     }
   });
 
@@ -142,15 +142,17 @@ router.post("/forgot-password", async (req, res) => {
   await user.save();
 
   const resetLink = `${process.env.BASE_URL}/reset-password.html?token=${token}&email=${email}`;
+  
   const transporter = nodemailer.createTransport({
-    service: "gmail",
+    service: "SendGrid",
     auth: {
-      user: process.env.SEND_EMAIL,
-      pass: process.env.EMAIL_PASS // hoặc mật khẩu ứng dụng nếu dùng Gmail
+      user: "apikey",
+      pass: process.env.SENDGRID_API_KEY
     }
   });
 
   await transporter.sendMail({
+    from: `"Đơn Hàng" <${process.env.SEND_EMAIL}>`,
     to: email,
     subject: "Khôi phục mật khẩu",
     html: `<p>Click vào link sau để đặt lại mật khẩu:</p><a href="${resetLink}">${resetLink}</a>`
