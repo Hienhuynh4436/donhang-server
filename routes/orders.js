@@ -36,7 +36,12 @@ router.post("/", authMiddleware, async (req, res) => {
       'shippingFee', 'discount', 'paid', 'remaining', 'paymentMethod',
       'sentDate', 'expectedDate', 'note'
     ];
-    const data = fields.map(f => req.body[f] || "");
+    const data = fields.map(f => {
+  if (f === "phone") {
+    return "'" + (req.body[f] || ""); // giữ số 0
+  }
+  return req.body[f] || "";
+});
 
     // Ghi vào Google Sheet
     await appendToGoogleSheet(user.sheetId, data, {
