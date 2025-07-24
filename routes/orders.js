@@ -1,7 +1,6 @@
 const express = require("express");
 const jwt = require("jsonwebtoken");
 const router = express.Router();
-const Order = require("../models/Order");
 const User = require("../models/User");
 const { appendToGoogleSheet } = require("../google-sheets");
 
@@ -18,7 +17,7 @@ function authMiddleware(req, res, next) {
   }
 }
 
-// ✅ Tạo đơn hàng và lưu Google Sheet
+// ✅ Tạo đơn hàng và chỉ lưu vào Google Sheet
 router.post("/", authMiddleware, async (req, res) => {
   try {
     const user = await User.findById(req.userId);
@@ -26,22 +25,17 @@ router.post("/", authMiddleware, async (req, res) => {
       return res.status(400).json({ message: "❗ Người dùng chưa cấu hình Google Sheet" });
     }
 
-    // Lưu vào MongoDB
-    const order = new Order({ userId: req.userId, ...req.body });
-    await order.save();
-
-    // Chuẩn bị dữ liệu lưu vào Google Sheets
+    // Chuẩn bị dữ liệu để ghi vào Google Sheet
     const fields = [
       'customerName', 'phone', 'address', 'product', 'price',
       'shippingFee', 'discount', 'paid', 'remaining', 'paymentMethod',
       'sentDate', 'expectedDate', 'note'
     ];
+
     const data = fields.map(f => {
-  if (f === "phone") {
-    return "'" + (req.body[f] || ""); // giữ số 0
-  }
-  return req.body[f] || "";
-});
+      const val = req.body[f] || "";
+      return f === "phone" ? "'" + val : val; // giữ số 0
+    });
 
     // Ghi vào Google Sheet
     await appendToGoogleSheet(user.sheetId, data, {
@@ -49,29 +43,10 @@ router.post("/", authMiddleware, async (req, res) => {
       private_key: process.env.GOOGLE_PRIVATE_KEY
     });
 
-    res.json({ message: "✅ Đã lưu đơn hàng vào Google Sheet", order });
+    res.json({ message: "✅ Đã lưu đơn hàng vào Google Sheet" });
   } catch (err) {
     console.error("❌ Lỗi lưu đơn:", err);
     res.status(500).json({ message: "❌ Lỗi server", error: err.message });
-  }
-});
-
-// 📋 Lấy danh sách đơn hàng
-router.get("/", authMiddleware, async (req, res) => {
-  const orders = await Order.find({ userId: req.userId }).sort("-createdAt");
-  res.json(orders);
-});
-
-// 🗑 Xoá đơn hàng
-router.delete("/:id", authMiddleware, async (req, res) => {
-  try {
-    const result = await Order.deleteOne({ _id: req.params.id, userId: req.userId });
-    if (result.deletedCount === 0) {
-      return res.status(404).json({ message: "Không tìm thấy đơn để xoá" });
-    }
-    res.json({ message: "✅ Đã xoá đơn hàng" });
-  } catch (err) {
-    res.status(500).json({ message: "❌ Xoá thất bại", error: err.message });
   }
 });
 
