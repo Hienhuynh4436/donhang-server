@@ -26,7 +26,20 @@ router.get("/me", authMiddleware, async (req, res) => {
     res.status(500).json({ message: "Lỗi server", error: err });
   }
 });
-
+// ✔️ Lưu sheet ID người dùng
+router.put("/sheet", authMiddleware, async (req, res) => {
+  const { sheetId } = req.body;
+  if (!sheetId) return res.status(400).json({ message: "Sheet ID trống" });
+  try {
+    const user = await User.findById(req.userId);
+    if (!user) return res.status(404).json({ message: "Không tìm thấy người dùng" });
+    user.sheetId = sheetId;
+    await user.save();
+    res.json({ message: "✅ Sheet ID đã lưu", sheetId });
+  } catch (err) {
+    res.status(500).json({ message: "Lỗi server", error: err.message });
+  }
+});
 // ✅ Lấy preferences riêng (đơn giản hơn nếu chỉ muốn lấy preferences)
 router.get("/preferences", authMiddleware, async (req, res) => {
   const user = await User.findById(req.userId);
