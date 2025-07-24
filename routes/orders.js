@@ -22,7 +22,7 @@ function authMiddleware(req, res, next) {
 router.post("/", authMiddleware, async (req, res) => {
   try {
     const user = await User.findById(req.userId);
-    if (!user.googleSheetId) {
+    if (!user.sheetId) {
       return res.status(400).json({ message: "❗ Người dùng chưa cấu hình Google Sheet" });
     }
 
@@ -39,7 +39,7 @@ router.post("/", authMiddleware, async (req, res) => {
     const data = fields.map(f => req.body[f] || "");
 
     // Ghi vào Google Sheet
-    await appendToGoogleSheet(user.googleSheetId, data, {
+    await appendToGoogleSheet(user.sheetId, data, {
       client_email: process.env.GOOGLE_CLIENT_EMAIL,
       private_key: process.env.GOOGLE_PRIVATE_KEY
     });
