@@ -9,7 +9,9 @@ const userSchema = new mongoose.Schema({
     textColor: String,
     borderColor: String,
     titleColor: String,
-    fontFamily: String
+    fontFamily: String, 
+    googleSheetId: String,
+googleSheetEmail: String
   },
   logoUrl: { type: String },
   lastLogin: { type: Date, default: Date.now }
